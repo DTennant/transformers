@@ -133,21 +133,31 @@ class Message:
 
     @property
     def category_failures(self) -> Dict:
+        MAX_ERROR_TEXT = 3000 - len("[Truncated]")
+
         line_length = 40
         category_failures = {k: v["failed"] for k, v in doc_test_results.items() if isinstance(v, dict)}
 
         report = ""
         for category, failures in category_failures.items():
+            new_text = report
             if len(failures) == 0:
                 continue
 
-            if report != "":
-                report += "\n\n"
+            if new_text != "":
+                new_text += "\n\n"
 
-            report += f"*{category} failures*:".ljust(line_length // 2).rjust(line_length // 2) + "\n"
-            report += "`"
-            report += "`\n`".join(failures)
-            report += "`"
+            new_text += f"*{category} failures*:".ljust(line_length // 2).rjust(line_length // 2) + "\n"
+            new_text += "`"
+            new_text += "`\n`".join(failures)
+            new_text += "`"
+
+            if len(new_text) > MAX_ERROR_TEXT:
+                # `failure_text` here has length <= 3000
+                report = report + "[Truncated]"
+                break
+            # `report` here has length <= MAX_ERROR_TEXT
+            report = new_text
 
         return {
             "type": "section",
