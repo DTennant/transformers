@@ -134,6 +134,7 @@ class Message:
     @property
     def category_failures(self) -> Dict:
         MAX_ERROR_TEXT = 3000 - len("[Truncated]")
+        truncated = False
 
         line_length = 40
         category_failures = {k: v["failed"] for k, v in doc_test_results.items() if isinstance(v, dict)}
@@ -149,7 +150,17 @@ class Message:
 
             new_text += f"*{category} failures*:".ljust(line_length // 2).rjust(line_length // 2) + "\n"
             new_text += "`"
-            new_text += "`\n`".join(failures)
+
+            for idx, failure in enumerate(failures):
+                _new_text = new_text
+                if idx > 0:
+                    _new_text += "\n"
+                _new_text += failure
+                if len(_new_text) > MAX_ERROR_TEXT - len("[Truncated]") - 1:
+                    new_text = new_text + "[Truncated]"
+                    break
+                new_text = _new_text
+
             new_text += "`"
 
             if len(new_text) > MAX_ERROR_TEXT:
